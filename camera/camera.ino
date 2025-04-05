@@ -71,14 +71,16 @@ void setup()
   {
     if (psramFound())
     {
-      config.jpeg_quality = 10;
-      config.fb_count = 2;
+      // config.jpeg_quality = 10;
+      config.jpeg_quality = 15;
+      // config.fb_count = 2;
+      config.fb_count = 1;
       config.grab_mode = CAMERA_GRAB_LATEST;
     }
     else
     {
       // Limit the frame size when PSRAM is not available
-      config.frame_size = FRAMESIZE_SVGA;
+      config.frame_size = FRAMESIZE_VGA;
       config.fb_location = CAMERA_FB_IN_DRAM;
     }
   }
@@ -171,14 +173,6 @@ void loop()
   String base64Image = base64::encode(fb->buf, fb->len);
   String jsonPayload = "{\"image\":\"" + base64Image + "\"}";
 
-  // Add the base64 image string to the JSON object
-  // doc["image"] = base64Image;
-
-  // Serialize JSON object to string
-  // String jsonData;
-  // serializeJson(doc, jsonData);
-
-  // int httpCode = http.POST(jsonData);
   Serial.println(jsonPayload);
   int httpCode = http.POST(jsonPayload);
 
@@ -198,7 +192,11 @@ void loop()
 
   Serial.print("Free heap after capture: ");
   Serial.println(ESP.getFreeHeap());
+  // if (ESP.getFreeHeap() < 20000)
+  // { // If heap too low
+  //   Serial.println("Low memory, restarting...");
+  //   ESP.restart();
+  // }
 
-  delay(10000); // Delay before capturing next frame
-  // delay(10000);
+  delay(5000); // Delay before capturing next frame
 }

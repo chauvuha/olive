@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, send_file
 import requests
 import io
 # from PIL import Image
@@ -7,13 +7,15 @@ import json
 
 app = Flask(__name__)
 
+latest_image = None
+
 @app.route('/', methods=["GET"])
 def test():
     return "hello world"
 
 @app.route('/upload', methods=['POST'])
 def upload_frame():
-    # print("Form data received:", request.form)
+    global latest_image
     # Get the image data from the POST request
     if not request.is_json:
         return jsonify({"message": "Request must be JSON", "status": "error"}), 400
@@ -35,6 +37,7 @@ def upload_frame():
     print(f"Image data length (after padding): {len(image_data)}")
 
     image_bytes = base64.b64decode(image_data)  # Decode from base64
+    latest_image = image_bytes
 
     return render_template_string('''
         <html>
@@ -58,22 +61,21 @@ def upload_frame():
     #     return jsonify({"message": "Failed to process frame", "status": "error"}), 500
 
 
+@app.route('/stream', methods=['GET'])
+def stream_image():
+    global latest_image
 
-# def send_to_gemini(image_data):
-#     # Make a POST request to the Gemini VLM API
-#     headers = {
-#         'Authorization': 'Bearer YOUR_ACCESS_TOKEN',  # Replace with your access token
-#         'Content-Type': 'application/json',
-#     }
-    
-#     data = {
-#         "input": {
-#             "image": base64.b64encode(image_data).decode('utf-8')  # Send base64-encoded image
-#         },
-#     }
-    
-#     response = requests.post(GEMINI_VLM_API_URL, json=data, headers=headers)
-#     return response
+    if latest_image is None:
+        return jsonify({"message": "No image available", "status": "error"}), 404
+
+    # Convert the image bytes back to a file-like object using io.BytesIO
+    image_io = io.BytesIO(latest_image)
+    image_io.seek(0)
+
+    # Return the image as a response
+    return send_file(image_io, mimetype='image/jpeg')
+
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
