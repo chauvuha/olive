@@ -24,6 +24,7 @@ const NotificationComponent = () => {
     // Listen for notifications
     socket.on('notification', (data) => {
       setNotification(data.message);
+      console.log(data.message);
     });
 
     // Cleanup the WebSocket connection on component unmount

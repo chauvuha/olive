@@ -55,6 +55,15 @@ def handle_connect():
     # emit('message', {'data': 'Hello from Flask-SocketIO!'})
 
 
+def send_notification_to_user(user_id, message):
+    socket_id = user_socket_map.get(user_id)
+    if socket_id:
+        # Send the notification only to the specific user
+        socketio.emit('notification', {'message': message}, room=socket_id)
+        print(f"Sent notification to {user_id}: {message}")
+    else:
+        print(f"User {user_id} not connected")
+
 
 @app.route('/', methods=["GET"])
 def test():
@@ -145,9 +154,11 @@ def upload_frame():
     if not is_processing and (response.fall_detected or response.unconscious_possible or response.visible_injury):
         is_processing = True
         emergency = response
-        print("no emergency")
+        print("emergency")
     
     print(response.context)
+
+    send_notification_to_user("Stevie", response.context)
         
     return jsonify({"message": "Image processed successfully"})
     # return jsonify({"message": "Image processed successfully", "gemini_response": response}), 200
