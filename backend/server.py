@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string, send_file
+from flask_socketio import SocketIO, send
 import requests
 import io
 from PIL import Image
@@ -12,6 +13,7 @@ import os
 from dotenv import load_dotenv
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 load_dotenv()
 
@@ -23,6 +25,9 @@ if not api_key:
 client = genai.Client(api_key=api_key)
 
 latest_image = None
+user = None
+event_description = None
+is_processing = False
 
 @app.route('/', methods=["GET"])
 def test():
@@ -123,4 +128,5 @@ def stream_image():
     return send_file(image_io, mimetype='image/jpeg')
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # app.run(host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
