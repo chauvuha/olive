@@ -2,8 +2,8 @@ import React from "react";
 
 const HomePage = () => {
   return (
-    <div>
-      <img src="logo.jpg" alt="Logo" style={{ maxWidth: '100%' }} />
+    <div className='main-box'>
+      <img src="olive.png" alt="Logo" className="logo" />
       <h1>Hello Margaret!</h1>
       <div>
         <p>

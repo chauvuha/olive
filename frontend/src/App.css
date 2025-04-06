@@ -36,3 +36,46 @@
     transform: rotate(360deg);
   }
 }
+
+.main-box {
+  display: flex;
+  flex-direction: column;
+  flex: 2;
+  width: 60%;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Phone mode */
+@media (max-width: 768px) {
+  .main-box {
+    width: 100%;
+    flex: 1;
+    padding: 10px;
+  }
+}
+
+.logo {
+  width: 80.788px;
+  display: block;
+  margin: 0 auto;
+}
+
+button {
+  width: 290px;
+  height: 60px;
+  flex-shrink: 0;
+  border-radius: 20px;
+  background: #253B23;
+  border: none;
+
+  color: #EEEEE4;
+
+  text-align: center;
+  font-family: "Lexend", sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}

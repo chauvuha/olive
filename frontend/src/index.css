@@ -6,6 +6,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #EEEEE4;
+  font-family: "Lexend", sans-serif;
+  font-optical-sizing: auto;
+  /* font-weight: 200; */
+  font-style: normal;
 }
 
 code {
