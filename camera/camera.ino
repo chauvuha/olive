@@ -24,9 +24,6 @@
 const char *ssid = "Pomona";
 const char *password = "";
 
-// void startCameraServer();
-// void setupLedFlash(int pin);
-
 // Flask server URL
 const char *serverUrl = "http://<IPADDRESS>:5000/upload";
 
@@ -106,32 +103,6 @@ void setup()
     return;
   }
 
-  //   sensor_t *s = esp_camera_sensor_get();
-  //   // initial sensors are flipped vertically and colors are a bit saturated
-  //   if (s->id.PID == OV3660_PID) {
-  //     s->set_vflip(s, 1);        // flip it back
-  //     s->set_brightness(s, 1);   // up the brightness just a bit
-  //     s->set_saturation(s, -2);  // lower the saturation
-  //   }
-  //   // drop down frame size for higher initial frame rate
-  //   if (config.pixel_format == PIXFORMAT_JPEG) {
-  //     s->set_framesize(s, FRAMESIZE_QVGA);
-  //   }
-
-  // #if defined(CAMERA_MODEL_M5STACK_WIDE) || defined(CAMERA_MODEL_M5STACK_ESP32CAM)
-  //   s->set_vflip(s, 1);
-  //   s->set_hmirror(s, 1);
-  // #endif
-
-  // #if defined(CAMERA_MODEL_ESP32S3_EYE)
-  //   s->set_vflip(s, 1);
-  // #endif
-
-  // // Setup LED FLash if LED pin is defined in camera_pins.h
-  // #if defined(LED_GPIO_NUM)
-  //   setupLedFlash(LED_GPIO_NUM);
-  // #endif
-
   WiFi.begin(ssid, password);
   WiFi.setSleep(false);
 
@@ -142,19 +113,10 @@ void setup()
   }
   Serial.println("");
   Serial.println("WiFi connected");
-
-  // startCameraServer();
-
-  // Serial.print("Camera Ready! Use 'http://");
-  // Serial.print(WiFi.localIP());
-  // Serial.println("' to connect");
 }
 
 void loop()
 {
-  // Create a JSON document
-  // StaticJsonDocument<1024> doc;
-
   // Capture an image from the camera
   camera_fb_t *fb = esp_camera_fb_get();
   if (!fb)
@@ -192,11 +154,6 @@ void loop()
 
   Serial.print("Free heap after capture: ");
   Serial.println(ESP.getFreeHeap());
-  // if (ESP.getFreeHeap() < 20000)
-  // { // If heap too low
-  //   Serial.println("Low memory, restarting...");
-  //   ESP.restart();
-  // }
 
   delay(5000); // Delay before capturing next frame
 }
