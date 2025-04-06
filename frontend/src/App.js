@@ -5,6 +5,7 @@ import Stream from './Stream';
 import Confirm from './Confirm';
 import HomePage from './HomePage';
 import SupportNetwork from './SupportNetwork';
+import ShowAllUsers from './ShowAllUsers';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/homepage" element={<HomePage />} />
         <Route path="/confirm" element={<Confirm />} />
         <Route path="/supportnetwork" element={<SupportNetwork />} />
+        <Route path="/showallusers" element={<ShowAllUsers />} />
       </Routes>
     </Router>
   );

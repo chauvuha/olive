@@ -11,6 +11,10 @@ import cv2
 import base64
 import os
 from dotenv import load_dotenv
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+from flask_cors import CORS  # Import CORS
+from bson import ObjectId
 from pydantic import BaseModel
 
 class Emergency(BaseModel):
@@ -37,6 +41,83 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
+# latest_image = None
+
+# MongoDB URI from environment
+MONGO_URI = os.getenv('MONGO_URI')
+
+# Create a new client and connect to the server
+client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
+
+# Get the database and collections
+db = client.get_database('users_db')
+users_collection = db['users']
+support_network_collection = db['support_network']
+
+# Helper function to convert MongoDB ObjectId to string
+def serialize_user(user):
+    user['_id'] = str(user['_id'])  # Convert ObjectId to string
+    return user
+
+def get_support_network(user_id):
+    print(f"Getting support network for user_id: {user_id}, type: {type(user_id)}")
+    
+    # If user_id is a string, convert it to ObjectId
+    if isinstance(user_id, str):
+        try:
+            user_id = ObjectId(user_id)
+            print(f"Converted to ObjectId: {user_id}")
+        except Exception as e:
+            print(f"Failed to convert to ObjectId: {e}")
+    
+    # First get the user document by ID
+    user = users_collection.find_one({'_id': user_id})
+    
+    if not user:
+        print(f"No user found with ID: {user_id}")
+        return []  # User not found
+    
+    print(f"Found user: {user}")
+    
+    # Now find support network members
+    support_network = list(support_network_collection.find({'userId': user['name']}))
+    print(f"Support network query for userId={user['name']}, found: {support_network}")
+    
+    # Convert to list of serialized users
+    result = [serialize_user(member) for member in support_network]
+    print(f"Returning serialized result: {result}")
+    
+    return result
+
+@app.route('/users', methods=['GET'])
+def get_all_users():
+    try:
+        print("Fetching all users...")
+        users = list(users_collection.find())
+        print(f"Found {len(users)} users: {[u['name'] for u in users]}")
+
+        users_list = []
+        for user in users:
+            print(f"Processing user: {user['name']}, _id: {user['_id']}")
+            
+            # Make a copy to avoid modifying the original
+            serialized_user = serialize_user(user.copy())
+            
+            # Get support network
+            print(f"Fetching support network for {user['name']}")
+            support_network = get_support_network(user['_id'])
+            print(f"Support network size: {len(support_network)}")
+            
+            serialized_user['support_network'] = support_network
+            users_list.append(serialized_user)
+
+        print(f"Returning {len(users_list)} users, first user support network size: {len(users_list[0]['support_network']) if users_list else 0}")
+        return jsonify(users_list), 200
+    except Exception as e:
+        print(f"Error in get_all_users: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({"message": str(e), "status": "error"}), 500
 latest_image = None
 user = None
 emergency = None
@@ -76,7 +157,6 @@ def handle_user_response(data):
         emit('notification', {'message': f"Glad to hear you're okay, {user}!"}, room=user_socket_map.get(user))
     else:
         emit('notification', {'message': f"Notifying your support network..."}, room=user_socket_map.get(user))
-
 
 
 
