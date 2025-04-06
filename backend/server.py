@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string, send_file
-from flask_socketio import SocketIO, send
+from flask_socketio import SocketIO, send, emit
 from flask_cors import CORS
 import requests
 import io
@@ -41,6 +41,20 @@ latest_image = None
 user = None
 emergency = None
 is_processing = False
+
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
+    user = request.args.get('user')  # This gets the 'user' parameter from the query string
+    
+    if user:
+        user_socket_map[user] = request.sid  # Store the socket ID with the user ID
+        print(f"User {user} connected with socket ID: {request.sid}")
+    else:
+        print(f"User with no ID connected with socket ID: {request.sid}")
+    # emit('message', {'data': 'Hello from Flask-SocketIO!'})
+
+
 
 @app.route('/', methods=["GET"])
 def test():
