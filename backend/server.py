@@ -63,17 +63,18 @@ def serialize_user(user):
     user['_id'] = str(user['_id'])  # Convert ObjectId to string
     return user
 
-def get_support_network(user_id):
-     print(f"Getting support network for user_id: {user_id}, type: {type(user_id)}")
-     user = users_collection.find_one({'_id': user_id})
-      
-     support_network = list(support_network_collection.find({'userId': user['name']}))
-     print(f"Support network query for userId={user['name']}, found: {support_network}")
-      
+def get_support_network(user):
+     print(f"Getting support network for user: {user}, type: {type(user)}")
+     
+     # Now find support network members
+     support_network = list(support_network_collection.find({'userId': user}))
+     # print(f"Support network query for userId={user}, found: {support_network}")
+     print(f"got support network for userId={user}")
+ 
      # Convert to list of serialized users
      result = [serialize_user(member) for member in support_network]
      print(f"Returning serialized result: {result}")
-      
+     
      return result
 
 # @app.route('/send_support_email/<user_id>', methods=['POST'])
@@ -126,7 +127,7 @@ def get_all_users():
               
               # Get support network
               print(f"Fetching support network for {user['name']}")
-              support_network = get_support_network(user['_id'])
+              support_network = get_support_network(user['name'])
               print(f"Support network size: {len(support_network)}")
               
               serialized_user['support_network'] = support_network

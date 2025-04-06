@@ -65,8 +65,8 @@ const NotificationPage = () => {
       setTimeoutId(timer);
     });
 
-    // Listen for the new 'response_notification' events (response messages)
-    socket.on("response_notification", (data) => {
+    // Listen for the new 'server_response' events (response messages)
+    socket.on("server_response", (data) => {
       setNotification(data.message);
 
       // You can display it in the same way or use this for custom actions in the future
