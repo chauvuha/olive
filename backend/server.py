@@ -13,7 +13,6 @@ import os
 from dotenv import load_dotenv
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from flask_cors import CORS  # Import CORS
 from bson import ObjectId
 from pydantic import BaseModel
 
@@ -47,10 +46,10 @@ client = genai.Client(api_key=api_key)
 MONGO_URI = os.getenv('MONGO_URI')
 
 # Create a new client and connect to the server
-client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
+mongodb_client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
 
 # Get the database and collections
-db = client.get_database('users_db')
+db = mongodb_client.get_database('users_db')
 users_collection = db['users']
 support_network_collection = db['support_network']
 
@@ -62,26 +61,9 @@ def serialize_user(user):
 def get_support_network(user_id):
     print(f"Getting support network for user_id: {user_id}, type: {type(user_id)}")
     
-    # If user_id is a string, convert it to ObjectId
-    if isinstance(user_id, str):
-        try:
-            user_id = ObjectId(user_id)
-            print(f"Converted to ObjectId: {user_id}")
-        except Exception as e:
-            print(f"Failed to convert to ObjectId: {e}")
-    
-    # First get the user document by ID
-    user = users_collection.find_one({'_id': user_id})
-    
-    if not user:
-        print(f"No user found with ID: {user_id}")
-        return []  # User not found
-    
-    print(f"Found user: {user}")
-    
     # Now find support network members
-    support_network = list(support_network_collection.find({'userId': user['name']}))
-    print(f"Support network query for userId={user['name']}, found: {support_network}")
+    support_network = list(support_network_collection.find({'userId': user_id}))
+    print(f"Support network query for userId={user_id}, found: {support_network}")
     
     # Convert to list of serialized users
     result = [serialize_user(member) for member in support_network]
@@ -118,6 +100,8 @@ def get_all_users():
         import traceback
         print(traceback.format_exc())
         return jsonify({"message": str(e), "status": "error"}), 500
+    
+
 latest_image = None
 user = None
 emergency = None
@@ -157,6 +141,11 @@ def handle_user_response(data):
         emit('notification', {'message': f"Glad to hear you're okay, {user}!"}, room=user_socket_map.get(user))
     else:
         emit('notification', {'message': f"Notifying your support network..."}, room=user_socket_map.get(user))
+        support_network = get_support_network(user_id=user)
+        print(support_network)
+
+        for member in support_network:
+            send_notification_to_user(member['name'], emergency)
 
 
 
@@ -253,7 +242,7 @@ def upload_frame():
     
     print(response.context)
 
-    send_notification_to_user("Stevie", response.context)
+    send_notification_to_user("Chau", response.context)
         
     return jsonify({"message": "Image processed successfully"})
     # return jsonify({"message": "Image processed successfully", "gemini_response": response}), 200

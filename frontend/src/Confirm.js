@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
-localStorage.setItem("user", "Stevie");
+localStorage.setItem("user", "Chau");
 
 const NotificationPage = () => {
   const [notification, setNotification] = useState('');
@@ -54,7 +54,7 @@ const NotificationPage = () => {
       // Set a timeout to automatically respond with "No" if the user doesn't respond in 10 seconds
       const timer = setTimeout(() => {
         handleResponse('No', data.message);
-      }, 25000); // milliseconds
+      }, 30000); // milliseconds
 
       // Store the timeout ID so we can clear it if the user responds early
       setTimeoutId(timer);
@@ -78,7 +78,7 @@ const NotificationPage = () => {
       {isModalOpen && (
         <div className="modal">
           <div className="modal-content">
-            <h2>We detected an emergency and will notify your support network in 10 seconds. Are you okay? Tap yes to dismiss.</h2>
+            <h2>We detected an emergency and will notify your support network in 30 seconds. Are you okay?</h2>
             <p>{question}</p>
             <div className="buttons">
               <button onClick={() => handleResponse('Yes', question)}>Yes</button>
