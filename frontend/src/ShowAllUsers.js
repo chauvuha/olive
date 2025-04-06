@@ -36,7 +36,7 @@ const ShowAllUsers = () => {
 
   return (
     <div>
-      <h1>All Users and Their Support Network</h1>
+      <h1>Support Network</h1>
       {users.length === 0 ? (
         <p>No users found.</p>
       ) : (

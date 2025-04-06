@@ -40,7 +40,7 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
-# latest_image = None
+latest_image = None
 
 # MongoDB URI from environment
 MONGO_URI = os.getenv('MONGO_URI')
@@ -60,16 +60,49 @@ def serialize_user(user):
 
 def get_support_network(user_id):
     print(f"Getting support network for user_id: {user_id}, type: {type(user_id)}")
-    
-    # Now find support network members
-    support_network = list(support_network_collection.find({'userId': user_id}))
-    print(f"Support network query for userId={user_id}, found: {support_network}")
-    
+     
+     # First get the user document by ID
+    user = users_collection.find_one({'_id': user_id})
+     
+     # Now find support network members
+    support_network = list(support_network_collection.find({'userId': user['name']}))
+    print(f"Support network query for userId={user['name']}, found: {support_network}")
+     
     # Convert to list of serialized users
     result = [serialize_user(member) for member in support_network]
     print(f"Returning serialized result: {result}")
-    
+     
     return result
+ 
+@app.route('/users', methods=['GET'])
+def get_all_users():
+     try:
+         print("Fetching all users...")
+         users = list(users_collection.find())
+         print(f"Found {len(users)} users: {[u['name'] for u in users]}")
+ 
+         users_list = []
+         for user in users:
+             print(f"Processing user: {user['name']}, _id: {user['_id']}")
+             
+             # Make a copy to avoid modifying the original
+             serialized_user = serialize_user(user.copy())
+             
+             # Get support network
+             print(f"Fetching support network for {user['name']}")
+             support_network = get_support_network(user['_id'])
+             print(f"Support network size: {len(support_network)}")
+             
+             serialized_user['support_network'] = support_network
+             users_list.append(serialized_user)
+ 
+         print(f"Returning {len(users_list)} users, first user support network size: {len(users_list[0]['support_network']) if users_list else 0}")
+         return jsonify(users_list), 200
+     except Exception as e:
+         print(f"Error in get_all_users: {str(e)}")
+         import traceback
+         print(traceback.format_exc())
+         return jsonify({"message": str(e), "status": "error"}), 500
 
 @app.route('/send_support_email/<user_id>', methods=['POST'])
 def send_support_email(user_id):
@@ -102,35 +135,35 @@ def send_support_email(user_id):
         return jsonify({"error": response.json()}), response.status_code
 
 
-@app.route('/users', methods=['GET'])
-def get_all_users():
-    try:
-        print("Fetching all users...")
-        users = list(users_collection.find())
-        print(f"Found {len(users)} users: {[u['name'] for u in users]}")
+# @app.route('/users', methods=['GET'])
+# def get_all_users():
+#     try:
+#         print("Fetching all users...")
+#         users = list(users_collection.find())
+#         print(f"Found {len(users)} users: {[u['name'] for u in users]}")
 
-        users_list = []
-        for user in users:
-            print(f"Processing user: {user['name']}, _id: {user['_id']}")
+#         users_list = []
+#         for user in users:
+#             print(f"Processing user: {user['name']}, _id: {user['_id']}")
             
-            # Make a copy to avoid modifying the original
-            serialized_user = serialize_user(user.copy())
+#             # Make a copy to avoid modifying the original
+#             serialized_user = serialize_user(user.copy())
             
-            # Get support network
-            print(f"Fetching support network for {user['name']}")
-            support_network = get_support_network(user['_id'])
-            print(f"Support network size: {len(support_network)}")
+#             # Get support network
+#             print(f"Fetching support network for {user['name']}")
+#             support_network = get_support_network(user['_id'])
+#             print(f"Support network size: {len(support_network)}")
             
-            serialized_user['support_network'] = support_network
-            users_list.append(serialized_user)
+#             serialized_user['support_network'] = support_network
+#             users_list.append(serialized_user)
 
-        print(f"Returning {len(users_list)} users, first user support network size: {len(users_list[0]['support_network']) if users_list else 0}")
-        return jsonify(users_list), 200
-    except Exception as e:
-        print(f"Error in get_all_users: {str(e)}")
-        import traceback
-        print(traceback.format_exc())
-        return jsonify({"message": str(e), "status": "error"}), 500
+#         print(f"Returning {len(users_list)} users, first user support network size: {len(users_list[0]['support_network']) if users_list else 0}")
+#         return jsonify(users_list), 200
+#     except Exception as e:
+#         print(f"Error in get_all_users: {str(e)}")
+#         import traceback
+#         print(traceback.format_exc())
+#         return jsonify({"message": str(e), "status": "error"}), 500
     
 
 latest_image = None
