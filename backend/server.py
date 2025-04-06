@@ -65,6 +65,21 @@ def send_notification_to_user(user_id, message):
         print(f"User {user_id} not connected")
 
 
+@socketio.on('confirm_response')
+def handle_user_response(data):
+    user = data['user']
+    response = data['response']
+    emergency = data['emergency']
+    print(f"Received response from {user}: {response}")
+
+    if response == 'Yes':
+        emit('notification', {'message': f"Glad to hear you're okay, {user}!"}, room=user_socket_map.get(user))
+    else:
+        emit('notification', {'message': f"Notifying your support network..."}, room=user_socket_map.get(user))
+
+
+
+
 @app.route('/', methods=["GET"])
 def test():
     return "hello world"
