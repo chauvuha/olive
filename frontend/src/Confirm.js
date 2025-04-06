@@ -79,7 +79,7 @@ const NotificationPage = () => {
   return (
     <div className="main-box">
       {/* Render the modal if the modal is open */}
-      {isModalOpen && (
+      {/* {isModalOpen && ( */}
         <div className="modal">
           <div className="modal-content">
             <h2 className="emergency-message">
@@ -110,10 +110,10 @@ const NotificationPage = () => {
             <h2>{question}</h2>
           </div>
           <div className="logo-container">
-            <img src="olive2.png" alt="Logo" className="logo2" />
+            <img src="olive2.png" alt="Logo" className="logo3" />
           </div>
         </div>
-      )}
+      {/* )} */}
 
       {/* Show the logo container */}
 
