@@ -78,44 +78,44 @@ const NotificationPage = () => {
 
   return (
     <div className="main-box">
-      {/* <h1>Notification Page</h1> */}
-
       {/* Render the modal if the modal is open */}
-      {/* {isModalOpen && ( */}
-      <div className="modal">
-        <div className="modal-content">
-        <h2 className="emergency-message">
-  I've detected an emergency and will notify your support network in 30
-  seconds.
-</h2>
-          <br></br>
-          <h2>Are you okay?</h2>
-          <br></br>
+      {isModalOpen && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2 className="emergency-message">
+              I've detected an emergency and will notify your support network in
+              30 seconds.
+            </h2>
+            <br />
+            <h2>Are you okay?</h2>
+            <br />
 
-          <div className="question-flex">
-            <div className="question-box">
-              <button
-                className="button-green"
-                onClick={() => handleResponse("Yes", question)}
-              >
-                Yes
-              </button>
-              <button
-                className="button-red"
-                onClick={() => handleResponse("No", question)}
-              >
-                No
-              </button>
+            <div className="question-flex">
+              <div className="question-box">
+                <button
+                  className="button-green"
+                  onClick={() => handleResponse("Yes", question)}
+                >
+                  Yes
+                </button>
+                <button
+                  className="button-red"
+                  onClick={() => handleResponse("No", question)}
+                >
+                  No
+                </button>
+              </div>
             </div>
+            <br />
+            <h2>Description: {question}</h2>
           </div>
-          <br></br>
-          <h2>Description{question}</h2>
+          <div className="logo-container">
+            <img src="olive2.png" alt="Logo" className="logo2" />
+          </div>
         </div>
-      </div>
-      <div className="logo-container">
-        <img src="olive2.png" alt="Logo" className="logo2" />
-      </div>
-      {/* )} */}
+      )}
+
+      {/* Show the logo container */}
 
       {/* Optionally show the notification as a text below */}
       {/* <div className="notification">
