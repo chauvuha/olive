@@ -51,8 +51,6 @@ const NotificationPage = () => {
 
     // Listen for notifications from the backend
     socket.on("notification", (data) => {
-      setNotification(data.message);
-      console.log(data.message);
 
       // Set the modal question and open it
       setQuestion(data.message); // Set the question text to the notification message
@@ -65,6 +63,15 @@ const NotificationPage = () => {
 
       // Store the timeout ID so we can clear it if the user responds early
       setTimeoutId(timer);
+    });
+
+    // Listen for the new 'response_notification' events (response messages)
+    socket.on("response_notification", (data) => {
+      setNotification(data.message);
+
+      // You can display it in the same way or use this for custom actions in the future
+      setQuestion(data.message); // Set the response message as a question
+      setIsModalOpen(true); // Open the modal to display the response
     });
 
     // Cleanup the WebSocket connection on component unmount

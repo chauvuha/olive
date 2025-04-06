@@ -178,37 +178,27 @@ def handle_user_response(data):
     print(f"Received response from {user}: {response}")
 
     if lock.acquire(blocking=False):
+        print("lock acquired")
         try: 
             if response == 'Yes':
-                emit('notification', {'message': f"Glad to hear you're okay, {user}!"}, room=user_socket_map.get(user))
-                # is_processing = False
+                emit('server_response', {'message': f"Glad to hear you're okay, {user}!"}, room=user_socket_map.get(user))
             else:
-                emit('notification', {'message': f"We've reached out to your priority contacts so they can make sure you're safe."}, room=user_socket_map.get(user))
+                emit('server_response', {'message': f"We've reached out to your priority contacts so they can make sure you're safe."}, room=user_socket_map.get(user))
                 support_network = get_support_network(user=user)
                 print(support_network)
 
                 send_support_email(user, emergency)
-                # is_processing = False
                 return "sent emails"
         finally:
             lock.release()
     else:
         print(f"Lock not acquired for user {user}. Another operation is in progress.")
-        emit('notification', {'message': "Please wait, the system is currently handling an emergency."}, room=user)
+        # emit('notification', {'message': "Please wait, the system is currently handling an emergency."}, room=user)
 
-
-
-@app.route('/', methods=["GET"])
-def test():
-    return "hello world"
 
 @app.route('/upload', methods=['POST'])
 def upload_frame():
     global latest_image, user, event_description, is_processing
-
-    # do nothing if already handling an emergency
-    if is_processing:
-        return jsonify({"message": "Already handling an emergency"})
 
     # Get the image data from the POST request
     if not request.is_json:
@@ -233,8 +223,6 @@ def upload_frame():
     latest_image = image_bytes
 
     image = Image.open(io.BytesIO(image_bytes))
-    # image = image.transpose(Image.ROTATE_270)
-    # latest_image = image
     
     prompt = """Analyze this image for potential falls or household injuries with high sensitivity and return it as a JSON. 
     Pay special attention to:
@@ -286,13 +274,14 @@ def upload_frame():
 
     response = response_raw.parsed
 
-    emergency = response
-    print("emergency")
     print(response.context)
 
     if response.fall_detected or response.unconscious_possible or response.visible_injury:
-        send_support_email("Chau", "We've detected an emergency. Go to http://localhost/")
+        print("EMERGENCY")
+        send_support_email("Chau", "We've detected an emergency. Open the app to dismiss.")
         send_notification_to_user("Chau", response.context)
+    else:
+        print("No critical emergency detected or low confidence.")
         
     return jsonify({"message": "Image processed successfully"})
 
@@ -325,25 +314,8 @@ def stream_image():
     image_io = io.BytesIO(latest_image)
     image_io.seek(0)
 
-    # Return the image as a response
     return send_file(image_io, mimetype='image/jpeg')
 
-
-# def update_image():
-#     global latest_image
-#     while True:
-#         # Simulate image update
-#         time.sleep(5)  # Change this to your actual image update logic
-#         # latest_image = create_new_image()  # Replace with your logic for getting new images
-#         print("Image updated")
-
-#         # Emit the updated image to all connected clients
-#         image_io = io.BytesIO()
-#         # latest_image.save(image_io, format='JPEG')
-#         image_io.seek(0)
-
-#         socketio.emit('image_update', {'image': image_io.getvalue()})  # Emit the image data
-#         print("Image sent to clients")
 
 if __name__ == "__main__":
     # app.run(host='0.0.0.0', port=5000, debug=True)
