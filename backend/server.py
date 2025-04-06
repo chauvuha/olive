@@ -33,12 +33,12 @@ load_dotenv()
 
 user_socket_map = {}
 
-api_key = os.getenv("GEMINI_API_KEY")
+# api_key = os.getenv("GEMINI_API_KEY")
 
-if not api_key:
-    raise ValueError("No API key found. Please set GEMINI_API_KEY environment variable.")
+# if not api_key:
+#     raise ValueError("No API key found. Please set GEMINI_API_KEY environment variable.")
 
-client = genai.Client(api_key=api_key)
+# client = genai.Client(api_key=api_key)
 
 latest_image = None
 
