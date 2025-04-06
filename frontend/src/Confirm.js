@@ -110,7 +110,7 @@ const NotificationPage = () => {
             <h2>{question}</h2>
           </div>
           <div className="logo-container">
-            <img src="olive2.png" alt="Logo" className="logo3" />
+            <img src="olive3.png" alt="Logo" className="logo3" />
           </div>
         </div>
       {/* )} */}
