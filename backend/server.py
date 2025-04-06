@@ -32,6 +32,8 @@ app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+lock = threading.Lock()
+
 load_dotenv()
 
 user_socket_map = {}
@@ -175,17 +177,24 @@ def handle_user_response(data):
     emergency = data['emergency']
     print(f"Received response from {user}: {response}")
 
-    if response == 'Yes':
-        emit('notification', {'message': f"Glad to hear you're okay, {user}!"}, room=user_socket_map.get(user))
-        # is_processing = False
-    else:
-        emit('notification', {'message': f"We've reached out to your priority contacts so they can make sure you're safe."}, room=user_socket_map.get(user))
-        support_network = get_support_network(user=user)
-        print(support_network)
+    if lock.acquire(blocking=False):
+        try: 
+            if response == 'Yes':
+                emit('notification', {'message': f"Glad to hear you're okay, {user}!"}, room=user_socket_map.get(user))
+                # is_processing = False
+            else:
+                emit('notification', {'message': f"We've reached out to your priority contacts so they can make sure you're safe."}, room=user_socket_map.get(user))
+                support_network = get_support_network(user=user)
+                print(support_network)
 
-        # send_support_email(user, emergency)
-        # is_processing = False
-        return "sent emails"
+                send_support_email(user, emergency)
+                # is_processing = False
+                return "sent emails"
+        finally:
+            lock.release()
+    else:
+        print(f"Lock not acquired for user {user}. Another operation is in progress.")
+        emit('notification', {'message': "Please wait, the system is currently handling an emergency."}, room=user)
 
 
 
@@ -274,23 +283,17 @@ def upload_frame():
             'response_schema': Emergency,
         },
     )
-    # response_text = response.text  # Assuming this is what you want to return from Gemini
-    # print(response_text)
 
     response = response_raw.parsed
-    # print(type(response_json.fall_detected))
 
-    # if not is_processing and (response.fall_detected or response.unconscious_possible or response.visible_injury):
-    # if not is_processing:
-    #     is_processing = True
     emergency = response
     print("emergency")
     print(response.context)
-    send_notification_to_user("Chau", response.context)
+
+    if response.fall_detected or response.unconscious_possible or response.visible_injury:
+        send_notification_to_user("Chau", response.context)
         
     return jsonify({"message": "Image processed successfully"})
-    # return jsonify({"message": "Image processed successfully", "gemini_response": response}), 200
-
 
 @app.route('/stream', methods=['GET'])
 def stream_image():
