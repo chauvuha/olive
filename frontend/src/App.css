@@ -87,3 +87,13 @@ button {
   gap: 12px;
   margin-top: 20px;
 }
+
+.logo-container {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;  /* Align the logo to the right */
+}
+
+.logo2 {
+  width: 100px; /* Adjust size as needed */
+}
