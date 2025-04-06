@@ -291,6 +291,7 @@ def upload_frame():
     print(response.context)
 
     if response.fall_detected or response.unconscious_possible or response.visible_injury:
+        send_support_email("Chau", "We've detected an emergency. Go to http://localhost/")
         send_notification_to_user("Chau", response.context)
         
     return jsonify({"message": "Image processed successfully"})
