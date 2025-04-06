@@ -54,6 +54,9 @@ def upload_frame():
     latest_image = image_bytes
 
     image = Image.open(io.BytesIO(image_bytes))
+    # image = image.transpose(Image.ROTATE_270)
+    # latest_image = image
+
 
     prompt = """Analyze this image for potential falls or household injuries with high sensitivity. 
     Pay special attention to:
