@@ -71,6 +71,37 @@ def get_support_network(user_id):
     
     return result
 
+@app.route('/send_support_email/<user_id>', methods=['POST'])
+def send_support_email(user_id):
+    support_network = get_support_network(user_id)
+
+    emails = [member.get('email') for member in support_network if member.get('email')]
+
+    if not emails:
+        return jsonify({"error": "No emails found in support network."}), 404
+
+    email_data = {
+        "from": "Olive <onboarding@resend.dev>", 
+        "to": emails,
+        "subject": "Alert from O-live",
+        "html": "<strong>Hi, your  may need help. Check the O-live app for more info.</strong>"
+    }
+
+    response = requests.post(
+        'https://api.resend.com/emails',
+        json=email_data,
+        headers={
+            'Authorization': f'Bearer {os.getenv("RESEND_API_KEY")}',  # or just paste it directly for now
+            'Content-Type': 'application/json'
+        }
+    )
+
+    if response.status_code == 200:
+        return jsonify({"message": "Emails sent", "response": response.json()})
+    else:
+        return jsonify({"error": response.json()}), response.status_code
+
+
 @app.route('/users', methods=['GET'])
 def get_all_users():
     try:
