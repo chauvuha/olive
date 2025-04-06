@@ -36,12 +36,12 @@ load_dotenv()
 
 user_socket_map = {}
 
-# api_key = os.getenv("GEMINI_API_KEY")
+api_key = os.getenv("GEMINI_API_KEY")
 
-# if not api_key:
-#     raise ValueError("No API key found. Please set GEMINI_API_KEY environment variable.")
+if not api_key:
+    raise ValueError("No API key found. Please set GEMINI_API_KEY environment variable.")
 
-# client = genai.Client(api_key=api_key)
+client = genai.Client(api_key=api_key)
 
 latest_image = None
 
@@ -177,13 +177,14 @@ def handle_user_response(data):
 
     if response == 'Yes':
         emit('notification', {'message': f"Glad to hear you're okay, {user}!"}, room=user_socket_map.get(user))
+        # is_processing = False
     else:
         emit('notification', {'message': f"We've reached out to your priority contacts so they can make sure you're safe."}, room=user_socket_map.get(user))
         support_network = get_support_network(user=user)
         print(support_network)
 
         # send_support_email(user, emergency)
-        is_processing = False
+        # is_processing = False
         return "sent emails"
 
 
@@ -280,12 +281,12 @@ def upload_frame():
     # print(type(response_json.fall_detected))
 
     # if not is_processing and (response.fall_detected or response.unconscious_possible or response.visible_injury):
-    if not is_processing:
-        is_processing = True
-        emergency = response
-        print("emergency")
-        print(response.context)
-        send_notification_to_user("Chau", response.context)
+    # if not is_processing:
+    #     is_processing = True
+    emergency = response
+    print("emergency")
+    print(response.context)
+    send_notification_to_user("Chau", response.context)
         
     return jsonify({"message": "Image processed successfully"})
     # return jsonify({"message": "Image processed successfully", "gemini_response": response}), 200
