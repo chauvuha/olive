@@ -15,6 +15,9 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from bson import ObjectId
 from pydantic import BaseModel
+import time
+import threading
+
 
 class Emergency(BaseModel):
     fall_detected: bool
@@ -58,55 +61,24 @@ def serialize_user(user):
     user['_id'] = str(user['_id'])  # Convert ObjectId to string
     return user
 
-def get_support_network(user_id):
-    print(f"Getting support network for user_id: {user_id}, type: {type(user_id)}")
-     
-     # First get the user document by ID
-    user = users_collection.find_one({'_id': user_id})
-     
-     # Now find support network members
-    support_network = list(support_network_collection.find({'userId': user['name']}))
-    print(f"Support network query for userId={user['name']}, found: {support_network}")
-     
+def get_support_network(user):
+    print(f"Getting support network for user: {user}, type: {type(user)}")
+    
+    # Now find support network members
+    support_network = list(support_network_collection.find({'userId': user}))
+    # print(f"Support network query for userId={user}, found: {support_network}")
+    print(f"got support network for userId={user}")
+
     # Convert to list of serialized users
     result = [serialize_user(member) for member in support_network]
     print(f"Returning serialized result: {result}")
-     
+    
     return result
- 
-@app.route('/users', methods=['GET'])
-def get_all_users():
-     try:
-         print("Fetching all users...")
-         users = list(users_collection.find())
-         print(f"Found {len(users)} users: {[u['name'] for u in users]}")
- 
-         users_list = []
-         for user in users:
-             print(f"Processing user: {user['name']}, _id: {user['_id']}")
-             
-             # Make a copy to avoid modifying the original
-             serialized_user = serialize_user(user.copy())
-             
-             # Get support network
-             print(f"Fetching support network for {user['name']}")
-             support_network = get_support_network(user['_id'])
-             print(f"Support network size: {len(support_network)}")
-             
-             serialized_user['support_network'] = support_network
-             users_list.append(serialized_user)
- 
-         print(f"Returning {len(users_list)} users, first user support network size: {len(users_list[0]['support_network']) if users_list else 0}")
-         return jsonify(users_list), 200
-     except Exception as e:
-         print(f"Error in get_all_users: {str(e)}")
-         import traceback
-         print(traceback.format_exc())
-         return jsonify({"message": str(e), "status": "error"}), 500
 
-@app.route('/send_support_email/<user_id>', methods=['POST'])
-def send_support_email(user_id):
-    support_network = get_support_network(user_id)
+# @app.route('/send_support_email/<user_id>', methods=['POST'])
+def send_support_email(user, message):
+    support_network = get_support_network(user)
+    print("SENDING EMAILS")
 
     emails = [member.get('email') for member in support_network if member.get('email')]
 
@@ -117,7 +89,7 @@ def send_support_email(user_id):
         "from": "Olive <onboarding@resend.dev>", 
         "to": emails,
         "subject": "Alert from O-live",
-        "html": "<strong>Hi, your  may need help. Check the O-live app for more info.</strong>"
+        "html": f"<strong>Hi {user},</strong><p>{message}</p><p>Check the O-live app to reach out to the rest of {user}'s support network.</p>"
     }
 
     response = requests.post(
@@ -130,40 +102,42 @@ def send_support_email(user_id):
     )
 
     if response.status_code == 200:
+        print("emails sent")
         return jsonify({"message": "Emails sent", "response": response.json()})
     else:
+        print("errors sending email")
         return jsonify({"error": response.json()}), response.status_code
 
 
-# @app.route('/users', methods=['GET'])
-# def get_all_users():
-#     try:
-#         print("Fetching all users...")
-#         users = list(users_collection.find())
-#         print(f"Found {len(users)} users: {[u['name'] for u in users]}")
+@app.route('/users', methods=['GET'])
+def get_all_users():
+    try:
+        print("Fetching all users...")
+        users = list(users_collection.find())
+        print(f"Found {len(users)} users: {[u['name'] for u in users]}")
 
-#         users_list = []
-#         for user in users:
-#             print(f"Processing user: {user['name']}, _id: {user['_id']}")
+        users_list = []
+        for user in users:
+            print(f"Processing user: {user['name']}, _id: {user['_id']}")
             
-#             # Make a copy to avoid modifying the original
-#             serialized_user = serialize_user(user.copy())
+            # Make a copy to avoid modifying the original
+            serialized_user = serialize_user(user.copy())
             
-#             # Get support network
-#             print(f"Fetching support network for {user['name']}")
-#             support_network = get_support_network(user['_id'])
-#             print(f"Support network size: {len(support_network)}")
+            # Get support network
+            print(f"Fetching support network for {user['name']}")
+            support_network = get_support_network(user['_id'])
+            print(f"Support network size: {len(support_network)}")
             
-#             serialized_user['support_network'] = support_network
-#             users_list.append(serialized_user)
+            serialized_user['support_network'] = support_network
+            users_list.append(serialized_user)
 
-#         print(f"Returning {len(users_list)} users, first user support network size: {len(users_list[0]['support_network']) if users_list else 0}")
-#         return jsonify(users_list), 200
-#     except Exception as e:
-#         print(f"Error in get_all_users: {str(e)}")
-#         import traceback
-#         print(traceback.format_exc())
-#         return jsonify({"message": str(e), "status": "error"}), 500
+        print(f"Returning {len(users_list)} users, first user support network size: {len(users_list[0]['support_network']) if users_list else 0}")
+        return jsonify(users_list), 200
+    except Exception as e:
+        print(f"Error in get_all_users: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({"message": str(e), "status": "error"}), 500
     
 
 latest_image = None
@@ -204,12 +178,13 @@ def handle_user_response(data):
     if response == 'Yes':
         emit('notification', {'message': f"Glad to hear you're okay, {user}!"}, room=user_socket_map.get(user))
     else:
-        emit('notification', {'message': f"Notifying your support network..."}, room=user_socket_map.get(user))
-        support_network = get_support_network(user_id=user)
+        emit('notification', {'message': f"We've reached out to your priority contacts so they can make sure you're safe."}, room=user_socket_map.get(user))
+        support_network = get_support_network(user=user)
         print(support_network)
 
-        for member in support_network:
-            send_notification_to_user(member['name'], emergency)
+        # send_support_email(user, emergency)
+        is_processing = False
+        return "sent emails"
 
 
 
@@ -220,6 +195,11 @@ def test():
 @app.route('/upload', methods=['POST'])
 def upload_frame():
     global latest_image, user, event_description, is_processing
+
+    # do nothing if already handling an emergency
+    if is_processing:
+        return jsonify({"message": "Already handling an emergency"})
+
     # Get the image data from the POST request
     if not request.is_json:
         return jsonify({"message": "Request must be JSON", "status": "error"}), 400
@@ -299,14 +279,13 @@ def upload_frame():
     response = response_raw.parsed
     # print(type(response_json.fall_detected))
 
-    if not is_processing and (response.fall_detected or response.unconscious_possible or response.visible_injury):
+    # if not is_processing and (response.fall_detected or response.unconscious_possible or response.visible_injury):
+    if not is_processing:
         is_processing = True
         emergency = response
         print("emergency")
-    
-    print(response.context)
-
-    send_notification_to_user("Chau", response.context)
+        print(response.context)
+        send_notification_to_user("Chau", response.context)
         
     return jsonify({"message": "Image processed successfully"})
     # return jsonify({"message": "Image processed successfully", "gemini_response": response}), 200
@@ -314,7 +293,25 @@ def upload_frame():
 
 @app.route('/stream', methods=['GET'])
 def stream_image():
-    global latest_image
+    global latest_image, emergency
+
+    # if latest_image is None:
+    #     return jsonify({"message": "No image available", "status": "error"}), 404
+
+    # image = Image.open(io.BytesIO(latest_image))
+    # image_io = io.BytesIO()
+    # image.save(image_io, format='JPEG')  # Save the PIL image as JPEG to the byte stream
+    # image_io.seek(0)  # Reset the stream pointer
+
+    # # Encode the byte data to base64
+    # image_base64 = base64.b64encode(image_io.getvalue()).decode('utf-8') 
+
+
+    # # Send the image and description as a JSON response
+    # return jsonify({
+    #     "description": emergency,
+    #     "image": image_base64  # Convert image bytes to string
+    # })
 
     if latest_image is None:
         return jsonify({"message": "No image available", "status": "error"}), 404
@@ -326,6 +323,24 @@ def stream_image():
     # Return the image as a response
     return send_file(image_io, mimetype='image/jpeg')
 
+
+# def update_image():
+#     global latest_image
+#     while True:
+#         # Simulate image update
+#         time.sleep(5)  # Change this to your actual image update logic
+#         # latest_image = create_new_image()  # Replace with your logic for getting new images
+#         print("Image updated")
+
+#         # Emit the updated image to all connected clients
+#         image_io = io.BytesIO()
+#         # latest_image.save(image_io, format='JPEG')
+#         image_io.seek(0)
+
+#         socketio.emit('image_update', {'image': image_io.getvalue()})  # Emit the image data
+#         print("Image sent to clients")
+
 if __name__ == "__main__":
     # app.run(host='0.0.0.0', port=5000, debug=True)
+    # threading.Thread(target=update_image, daemon=True).start()
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

@@ -6,8 +6,8 @@ const LogIn = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (username.trim()) {
-      localStorage.setItem('username', username);
-      alert(`Test, hello ${username}!`);
+      localStorage.setItem('user', username);
+      alert(`Test, hello ${localStorage.getItem('user')}!`);
     }
   };
 
