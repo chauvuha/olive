@@ -135,3 +135,7 @@ button {
 .emergency-message {
   color: #863428;
 }
+
+button svg {
+  margin-right: 10px; /* Adjust the value to the desired spacing */
+}
